@@ -1,9 +1,6 @@
 #!/bin/bash
 
-#
 # Tasks
-#
-
 function nix_task() {
   echo "Installing Nix..."
   bash <(curl https://nixos.org/nix/install)
@@ -39,9 +36,7 @@ function link_task() {
   done
 }
 
-#
 # Utils
-#
 function setup() {
   local current_task=1
   local use_tasks=$(filter_by_env $tasks)
@@ -68,9 +63,9 @@ function filter_by_env() {
 # You can append a suffix tag composed by signs of condition after file or task name.
 # This tag affects whether a symbolic link should be created or a task should run depending on current environment.
 #
-# case 'l' => The platform should be Linux.
-# case 'x' => The windowing system should be X Window System or Wayland.
-# case 'w' => The windowing system should be Wayland.
+# case 'l' => The platform must be Linux.
+# case 'x' => The windowing system must be X Window System or Wayland.
+# case 'w' => The windowing system must be Wayland.
 
 # Files put on the home dir
 declare -a dots=(bashrc bin emacs.d gitconfig gitignore tmux.conf vim zsh.d nixpkgs xmonad:lx xorg.d:lx)
