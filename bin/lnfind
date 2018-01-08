@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+# lnfind : Find symlinks or symlinks of original file.
+#
+# example:
+#   # When this command prints:
+#   ls -l $HOME | grep .vimrc # ... /home/user/.vimrc -> /home/user/.vim/vimrc
+#
+#   # it should find like:
+#   lnfind $HOME .vimrc    # Outputs '/home/user/.vimrc'
+#   lnfind -r $HOME .vimrc # Outputs '/home/user/.vim/vimrc'
+#
+# lnfind command can reverse lookup with '-r' option.
+#
+
+if [ "$1" = "-r" ]; then
+  dir=$2; tar=$3; reg="s,.*\,,,g"
+else
+  dir=$1; tar=$2; reg="s,\,.*,,g"
+fi
+
+find $dir -ls | grep -oE "/.*\s\->.*$" | tr -s " \-> " "," | grep -E $(echo $tar | sed "s,\.,\\\.,g")"$" | sed $reg
+
+unset dir tar reg

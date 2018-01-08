@@ -1,0 +1,199 @@
+" Window split settings
+highlight TermCursor ctermfg=red guifg=red
+set splitbelow
+set splitright
+
+"" Change leader key
+let mapleader = ","
+
+"" File encodings
+set encoding=utf-8
+set fileencodings=utf-8,iso-2022-jp,euc-jp,ascii
+set fileformats=unix,mac,dos
+
+set t_Co=256
+
+"" Indent and tab
+set expandtab
+set nowrap
+set autoindent
+set smartindent
+set smarttab
+
+"" Show line numbers and set the width
+set number
+set numberwidth=5
+
+"" Show vim title for a window
+set title
+
+"" Show command in status line
+set showcmd
+
+"" Do not create backup and swap files
+set noswapfile
+set nobackup
+
+"" Enable incremental search
+set incsearch
+
+"" Set command line height
+set cmdheight=1
+
+"" Incompatible with Vi
+set nocompatible
+
+"" Enable cursor highlighting
+set cursorline
+
+" Set list characters
+set list
+set listchars=tab:┊\ ,trail:-,extends:<,precedes:<,eol:¬,nbsp:%
+
+" Enable clipboard with selection (Only for X11)
+set clipboard=unnamed,unnamedplus
+
+" Terminal settings
+tnoremap <Leader><ESC> <C-\><C-n>
+tnoremap <silent> <C-n> <C-\><C-n> :tabnext <BAR> :call InsertModeOnTerminal()<CR>
+tnoremap <silent> <C-p> <C-\><C-n> :tabprevious <BAR> :call InsertModeOnTerminal()<CR>
+tnoremap <silent> <Leader>ee <C-\><C-n> :tabnew +:terminal<CR>
+tnoremap <silent> <Leader>ec <C-\><C-n> :tabclose <BAR> :call InsertModeOnTerminal()<CR>
+tnoremap <silent> <Leader>ev <C-\><C-n> :vsp +:terminal<CR>
+tnoremap <silent> <Leader>eh <C-\><C-n> :sp +:terminal<CR>
+
+" Normal settings
+nnoremap <silent> <C-n> :tabnext<CR>
+nnoremap <silent> <C-p> :tabprevious<CR>
+nnoremap <silent> <Leader>ee :tabnew<CR>
+nnoremap <silent> <Leader>ec :tabclose<CR>
+nnoremap <silent> <Leader>ev :vsp<CR>
+nnoremap <silent> <Leader>eh :sp<CR>
+nnoremap <silent> <Leader>eq :q<CR>
+
+"" Save command
+nnoremap <silent> <Leader>o :w<CR>
+
+"" Toggle NERDTree
+nnoremap <silent> <Leader>d :NERDTreeToggle<CR>
+
+"" Launch NERDTree
+nnoremap <silent> <Leader>n :NERDTree<CR>
+
+"" Vim over
+nnoremap <silent> <Leader>m :OverCommandLine<CR>
+
+"" Color
+colorscheme desert
+syntax on
+
+hi CursorLine cterm=underline ctermbg=NONE ctermfg=NONE
+hi CursorColumn cterm=NONE ctermbg=NONE ctermfg=NONE
+
+"" Colorize special keys
+highlight SpecialKey term=underline ctermfg=024 guifg=darkgray
+
+augroup CursorLine
+  "au VimEnter,WinEnter,BufWinEnter * if &l:buftype != 'terminal' | setlocal cursorline | endif
+  au VimEnter,WinEnter,BufWinEnter * setlocal cursorline
+  au WinLeave,BufWinLeave * setlocal nocursorline
+augroup END
+
+augroup CursorColumn
+  "au VimEnter,WinEnter,BufWinEnter * if &l:buftype != 'terminal' | setlocal cursorcolumn | endif
+  au VimEnter,WinEnter,BufWinEnter * setlocal cursorcolumn
+  au WinLeave,BufWinLeave * setlocal nocursorcolumn
+augroup END
+
+func! InsertModeOnTerminal()
+    if &buftype == 'terminal'
+        startinsert!
+    endif
+endfunc
+
+func! MaybeInsertMode(direction)
+    stopinsert
+    execute "wincmd" a:direction
+    execute "call InsertModeOnTerminal()"
+endfunc
+
+" Window navigation function
+" Make ctrl-h/j/k/l move between windows and auto-insert in terminals
+func! s:mapMoveToWindowInDirection(direction)
+    execute "tnoremap" "<silent>" "<C-" . a:direction . ">"
+                \ "<C-\\><C-n>"
+                \ ":call MaybeInsertMode(\"" . a:direction . "\")<CR>"
+    execute "nnoremap" "<silent>" "<C-" . a:direction . ">"
+                \ ":wincmd " . a:direction . "<CR>"
+endfunc
+
+for dir in ["h", "j", "l", "k"]
+    call s:mapMoveToWindowInDirection(dir)
+endfor
+
+"" Let NERDTree show hidden files
+let NERDTreeShowHidden=0
+
+"" Tabs
+"" Tab stops
+let g:current_tab_stops = 2
+let g:current_tab_type = 'soft'
+execute 'set shiftwidth=' .g:current_tab_stops
+execute 'set tabstop=' .g:current_tab_stops
+
+""
+" Convert to no expand tab and retab specific tabstops.
+" @param number tabstops
+"
+function! ConvertToNoExpandTab(tabstops)
+  execute 'set noexpandtab | retab! ' .a:tabstops
+endfunction
+
+""
+" Convert to expand tab and retab specific tabstops.
+" @param number tabstops
+"
+function! ConvertToExpandTab(tabstops)
+  execute 'set expandtab | retab! ' .a:tabstops
+endfunction
+
+""
+" Toggle tab type.
+"
+function! ToggleTabType()
+  if g:current_tab_type == 'soft'
+    let g:current_tab_type = 'hard'
+  else
+    let g:current_tab_type = 'soft'
+  endif
+  call ConvertToNoExpandTab(g:current_tab_stops)
+endfunction
+
+""
+" Modify tabstops
+" @param number tabstops
+"
+function! ModifyTabStops(tabstops)
+  let g:current_tab_stops = a:tabstops
+  execute 'set shiftwidth=' .g:current_tab_stops
+  execute 'set tabstop=' .g:current_tab_stops
+  call ConvertToNoExpandTab(g:current_tab_stops)
+endfunction
+
+"" Convert spaces to tabs when reading file
+autocmd bufreadpost * call ConvertToNoExpandTab(g:current_tab_stops)
+
+"" Convert tabs to spaces before writing file
+autocmd bufwritepre * if g:current_tab_type == 'soft' | call ConvertToExpandTab(g:current_tab_stops) | endif
+
+"" Convert spaces to tabs after writing file (to show guides again)
+autocmd bufwritepost * call ConvertToNoExpandTab(g:current_tab_stops)
+
+"" Start vim-indent-guides automatically at startup
+let g:indent_guides_enable_on_vim_startup=0
+
+"" For odd number of tabs
+autocmd VimEnter,Colorscheme * :hi IndentGuidesOdd guibg=#262626 ctermbg=255
+
+"" For even number of tabs
+autocmd VimEnter,Colorscheme * :hi IndentGuidesEven guibg=#3c3c3c ctermbg=255

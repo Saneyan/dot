@@ -1,0 +1,27 @@
+# Start ibus daemon which supports xterm
+ibus-daemon --daemonize --xim --replace
+
+# Start urxvt server
+urxvtd --quiet --opendisplay --fork
+
+# Normal cursor
+xsetroot -cursor_name left_ptr
+
+# Apply X settings
+xautolock -time 10 -locker slimlock &
+mirrorld
+
+# Launch nm-applet
+[ dmgr has "xfce4" ] && nm-applet &
+
+# Set desktop background
+~/bin/update-bg
+
+xorg_begin_session()
+{
+  if dmgr has "xfce4"; then
+    exec dbus-launch startxfce4
+  elif dmgr has "xmonad"; then
+    exec dbus-launch xmonad
+  fi
+}

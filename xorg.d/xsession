@@ -1,0 +1,20 @@
+#!/bin/sh
+export XKBOPTIONS="ctrl:nocaps"
+export XMODIFIERS="@im=ibus"
+export GTK_IM_MODULE="xim"
+export QT_IM_MODULE="xim"
+
+XORG_HOMEDIR=$HOME/.xorg.d
+
+# Apply resource settings of X Window System
+[ -e $XORG_HOMEDIR/Xdefaults ] && xrdb -load $XORG_HOMEDIR/Xdefaults
+
+# Load keymap settings of X Window System
+[ -e $XORG_HOMEDIR/Xmodmap ] && xmodmap $XORG_HOMEDIR/Xmodmap
+
+# Load external shell scripts
+for f in $XORG_HOMEDIR/Xconfig $XORG_HOMEDIR/Xexec; do
+  [ -e $f ] && source $f;
+done
+
+xorg_begin_session

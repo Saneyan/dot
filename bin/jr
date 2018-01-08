@@ -1,0 +1,23 @@
+#!/usr/bin/env zsh
+# This script use javac and java to compile Java file and execute class file.
+
+# Remove extension from pathname.
+[[ "${1}" =~ ".*\.java$" ]] && f=$(echo $1 | sed "s,\.java$,,") || f=$1
+
+# Compile Java file.
+javac $f.java
+
+if [ $? = 1 ]; then
+  echo "Compile failed. Aborted."
+  exit 1
+fi
+
+echo "Compiled."
+
+if [ ! -e $f.class ]; then
+  echo "The Java class file is not existed. Aborted."
+  exit 1
+fi
+
+java $f ${@:2}
+exit 0

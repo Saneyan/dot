@@ -1,0 +1,90 @@
+!!
+!! Colors
+!!
+! Black: dark(0), light(8)
+URxvt*color0: #eee8d5
+URxvt*color8: #fdf6e3
+
+! Red: dark(1), light(9)
+URxvt*color1: #dc322f
+URxvt*color9: #cb4b16
+
+! Green: dark(2), light(10)
+URxvt*color2: #859900
+URxvt*color10: #586e75
+
+! Yellow: dark(3), light(11)
+URxvt*color3: #b58900
+URxvt*color11: #839496
+
+! Blue: dark(4), light(12)
+URxvt*color4: #268bd2
+URxvt*color12: #1e5ad7
+
+! Magenda: dark(5), light(13)
+URxvt*color5: #d33682
+URxvt*color13: #6c71c4
+
+! Cyan: dark(6), light(14)
+URxvt*color6: #167290
+URxvt*color14: #1C4A59
+
+! White: dark(7), light(15)
+URxvt*color7: #073642
+URxvt*color15: #002b36
+
+URxvt*fading:                 5
+URxvt*fadeColor:              #fdf6e3
+URxvt*background:             #fdf6e3
+URxvt*foreground:             #eaeaea
+URxvt*cursorColor:            #586e75
+URxvt*pointerColorBackground: #93a1a1
+URxvt*pointerColorForeground: #586e75
+URxvt*internalBorder: 10
+
+!!
+!! Fonts
+!!
+URxvt.font: xft:Migu 1M:pixelsize=14:antialias=true,Siji:pixelsize=14:antialias=true
+!!URxvt.font: xft:Bitstream Vera Sans Mono:pixelsize=13:antialias=true,
+!!            xft:IPAPGothic:pxelsize=13:antialias=true
+!!URxvt.font: xft:Inconsolata:pixelsize=14:antialias=true,
+!!            xft:Ubuntu-R:pixelsize=14:antialias=true
+
+!!
+!! Additional keys
+!!
+!!URxvt.keysym.M-Escape: perl:keyboard-select:activate
+!!URxvt.keysym.M-u: perl:url-select:select_next
+!!URxvt.keysym.M-c: perl:clipboard:copy
+!!URxvt.keysym.M-v: perl:clipboard:paste
+!!URxvt.keysym.M-C-v: perl:clipboard:paste_escaped
+
+!!
+!! Scroll bar
+!!
+URxvt*scrollBar: false
+
+!!
+!! Transparency
+!!
+!! For native transparency
+!URxvt*transparent: true
+URxvt*shading: 10
+
+!! For true transparency
+URxvt.depth: 32
+URxvt.background: rgba:1111/1111/1111/ffff
+
+!!
+!! Other settings
+!!
+URxvt*saveLines:         10000
+URxvt*selectToClipboard: true
+URxvt*loginShell:        true
+URxvt*backarrowKey:      false
+URxvt*inheritPixmap:     True
+URxvt.iso14755: False
+!!URxvt.perl-ext-common: default,clipboard,url-select,keyboard-select
+!!URxvt.clipboard.copycmd: xclip -i selection clipboard
+!!URxvt.clipboard.pastecmd: xclip -o selection clipboard

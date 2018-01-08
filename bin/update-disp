@@ -1,0 +1,7 @@
+#!/bin/bash
+
+if [ $# -ne 0 ]; then
+  /usr/bin/xrandr $@ && ~/bin/update-bg
+else
+  /usr/bin/xrandr
+fi

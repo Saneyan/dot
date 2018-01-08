@@ -1,0 +1,7 @@
+#!/bin/bash
+
+if [ -e ~/Pictures/bg.jpg ]; then
+  feh --bg-scale ~/Pictures/bg.jpg
+elif [ -e ~/Pictures/bg.png ]; then
+  feh --bg-scale ~/Pictures/bg.png
+fi

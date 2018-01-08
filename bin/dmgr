@@ -1,0 +1,649 @@
+#!/usr/bin/env zsh
+#
+# The dotfile manager (dmgr)
+#
+# Help build and manage your best *nix environment :)
+#
+# @rev    0.10.1
+# @update 2014-11-18
+# @author TADOKORO Saneyuki <saneyan@mail.gfunction.com>
+#
+
+declare -x MODE=''
+declare -i REC=0
+declare -rx DMGR_VERSION="0.10.0"
+declare -rx DMGR_DIST=$(uname -r)
+declare -rx DMGR_CONFDIR=$HOME/.dmgr/conf
+declare -rx DMGR_FEATUREDIR=$HOME/.dmgr/features
+declare -rx DMGR_PLUGINDIR=$HOME/.dmgr/plugins
+declare -rx DMGR_HOOKDIR=$HOME/.dmgr/hooks
+declare -r DMGR_INUSE=$DMGR_CONFDIR/inuse.list
+declare -r DMGR_SUPPORT=$DMGR_CONFDIR/support.list
+declare -r DMGR_PLUGIN=$DMGR_CONFDIR/plugin.list
+declare -r DMGR_OFFICIAL=$DMGR_CONFDIR/official.list
+declare -A DMGR_TMP_SCRIPT
+DMGR_TMP_SCRIPT=(1 /tmp/dmgr-tmp-script 2 /tmp/dmgr-tmp-script-nested)
+
+# Load dotfile path.
+. $DMGR_CONFDIR/paths/_repo
+
+#
+# Parse feature list to array format of shellscript.
+# @param $1 The list file path.
+#
+function _parse() {
+  echo $(cat $1) | tr -s ',' ' '
+}
+
+#
+# Parse array to feature list and save it.
+# @param $1 The list file path.
+# @param $2... An array containing feature names.
+#
+function _save() {
+  echo ${@:2} | tr -s ' ' ',' > $1
+}
+
+#
+# Get file paths with specific pattern.
+# @param $1 Directory.
+# @param $2 Pattern.
+#
+function _get() {
+  find $1 | grep -E $2 2>/dev/null
+}
+
+#
+# Hook dot recipe.
+# @param $1 Executive mode.
+# @param $2... Commands which this function can call.
+#
+function _hook() {
+  local line= reg= args= ac= e=
+  local mode="null"
+  REC=$(($REC + 1))
+
+  if [ $# -le 2 ]; then
+    echo "Too few arguments."
+    return 1
+  fi
+
+  if [ -e $DMGR_TMP_SCRIPT[$REC] ]; then
+    echo '' > $DMGR_TMP_SCRIPT[$REC]
+  else
+    touch $DMGR_TMP_SCRIPT[$REC]
+  fi
+  chmod 600 $DMGR_TMP_SCRIPT[$REC]
+
+  for e in ${@:3}; do
+    ac=$ac$(echo $e |
+      sed "s/^ALL$/a/" |
+      sed "s/^ECHO$/e/" |
+      sed "s/^RUN$/r/" |
+      sed "s/^LINK$/l/" |
+      sed "s/^UNLINK$/u/" |
+      sed "s/^USE$/s/" |
+      sed "s/^UNUSE$/n/" |
+      sed "s/^REARCH$/c/")
+  done
+
+  if [ $REC = 2 ]; then
+    echo -e "==> NESTED HOOK <${1}>: ${2}"
+  else
+    MODE=$1
+    echo -e "\x1B[32mHOOK <${1}>: ${2}\x1B[0m"
+  fi
+
+  cat $2 | while read line; do _d $line
+    if [[ $line =~ "\[[a-z]+\]" ]]; then
+      [ $line = "[$1]" ] && mode=$1 || mode="null"
+    elif [ $mode != "null" ]; then
+      if [[ $line =~ "^ECHO\s" ]]   && [[ $ac =~ "a|e" ]]; then
+        echo $line | sed "s/^ECHO/echo/" >> $DMGR_TMP_SCRIPT[$REC]
+      elif [[ $line =~ "^RUN\s" ]]      && [[ $ac =~ "a|r" ]]; then
+        echo $line | sed "s/^RUN//" >> $DMGR_TMP_SCRIPT[$REC]
+      elif [[ $line =~ "^REARCH\s" ]] && [[ $ac =~ "a|c" ]]; then
+        e=($(echo $line))
+        cmd="s,^REARCH ${e[2]} "${e:2}",_hook ${e[2]} ${2} "${e:2}","
+        echo $line | sed $cmd >> $DMGR_TMP_SCRIPT[$REC]
+      elif [[ $line =~ "^LINK\s" ]]   && [[ $ac =~ "a|l" ]]; then
+        echo $line | sed "s/^LINK/_link/" >> $DMGR_TMP_SCRIPT[$REC]
+      elif [[ $line =~ "^UNLINK\s" ]] && [[ $ac =~ "a|u" ]]; then
+        echo $line | sed "s/^UNLINK/_unlink/" >> $DMGR_TMP_SCRIPT[$REC]
+      elif [[ $line =~ "^USE" ]] && [[ $ac =~ "a|s" ]]; then
+        echo $line | sed "s/^USE/_use/" >> $DMGR_TMP_SCRIPT[$REC]
+      elif [[ $line =~ "^UNUSE" ]] && [[ $ac =~ "a|n" ]]; then
+        echo $line | sed "s/^UNUSE/_unuse/" >> $DMGR_TMP_SCRIPT[$REC]
+      elif [[ $line =~ "^(if|elif|else|fi|then|for|do|done)" ]]; then
+        echo $line >> $DMGR_TMP_SCRIPT[$REC]
+      fi
+    fi
+  done
+
+  . $DMGR_TMP_SCRIPT[$REC]
+  rm -f $DMGR_TMP_SCRIPT[$REC]
+
+  REC=$(($REC - 1))
+
+  [ $REC = 0 ] && MODE=''
+
+  return 0
+}
+
+#
+# Link symlinks.
+#
+function _link() {
+  local src= dst=
+  
+  if [ $# -le 2 ]; then
+    src=$(eval "echo $1" | sed "s,@,${DMGR_REPODIR}/common/,")
+    if [ $# -eq 2 ]; then
+      dst=$(eval "echo ${2}")
+    else
+      dst=$HOME/.$(echo $1 | sed "s/@//")
+    fi
+    [ $DMGR_DEBUGMODE ] &&
+      ln -sv $src $dst || ln -s $src $dst
+  else
+    echo "Too many arguments."
+    return 1
+  fi
+
+  return 0
+}
+
+#
+# Unlink symlinks.
+# @param $1 Original file path.
+#
+function _unlink() {
+  declare -a lns
+  local e=
+
+  if [ $# -ge 2 ]; then
+    echo "Too many arguments."
+    return 1
+  fi
+
+  [ "${LISTS}" = "" ] && LISTS=$(find $HOME -ls)
+
+  lns=($(echo $LISTS |
+  grep -oE "/.*\s\->.*$" |
+  tr -s " \-> " "," |
+  grep -E $(echo $(eval "echo $1" | sed "s,@,${DMGR_REPODIR}/common/,") | sed "s,\.,\\\.,g")"$" |
+  sed "s,\,.*,,g"))
+
+  for e in $lns; do
+    [ $DMGR_DEBUGMODE ] &&
+      rm -v $e || rm $e
+  done
+
+  return 0
+}
+
+#
+# Make symlinks for scripts in ./bin
+# @param $1... The script name.
+#
+function _use() {
+  local e=
+
+  for e in $(echo $@ | tr -s ',' ' '); do
+    if [ ! -e $DMGR_REPODIR/bin/$e ]; then
+      echo "${e} is not found."
+      continue
+    else
+      ln -s $DMGR_REPODIR/bin/$e $HOME/bin/$e
+    fi
+  done
+}
+
+# Remove symlinks from ~/bin
+# @param $1... The script name.
+#
+function _unuse() {
+  local e=
+
+  for e in $(echo $@ | tr -s ',' ' '); do
+    if [ ! -e $HOME/bin/$e ]; then
+      echo "${e} is not found."
+      continue
+    else
+      rm -f $HOME/bin/$e
+    fi
+  done
+}
+
+#
+# Report an error and exit with error status.
+# @param $1 An error message.
+#
+function _reperr() {
+  echo $1 && exit 1
+}
+
+#
+# Bold message font.
+# @param $1 Message.
+#
+function _fbold() {
+  echo -e "\033[0;1m${1}\033[0;0m"
+}
+
+#
+# Add debug prefix to message top.
+# #param $1 Message.
+#
+function _d() {
+  local e= c=true
+
+  if [ $DMGR_DEBUGMODE ]; then
+    for e in ${@}; do
+      if [ $c = true ]; then
+        echo -e "\x1B[35mDEBUG\x1B[0m ${e}"
+        c=false
+      else
+        echo -e "\x1B[35m >>> \x1B[0m ${e}"
+      fi
+    done
+  fi
+}
+
+#
+# Check if a list has specific value.
+# @param $1 The file name including a list.
+# @param $2 The value.
+#
+function _exist() {
+  [[ ${$(_parse $1)[(r)$2]} == ${2} ]] && return 0
+  return 1
+}
+
+#
+# Enforce argument checking.
+# @param $1 Argument length.
+# @param $2 The condition.
+# @param $3 Specified length.
+#
+function _enforce_arg_chk() {
+  if ! eval "[ $(($1 - 1)) $(echo $2 | sed 's/>=/-ge/' | sed 's/=/-eq/') ${3} ]"; then
+    echo "Missing arguments."
+    return 1
+  fi
+  return 0
+}
+
+#
+# Define config paths.
+# @param $1... Config paths.
+#
+function def() {
+  DMGR_CONFPATH=(${@:1} $DMGR_CONFPATH)
+}
+
+function dmgr_env() {
+  case $1 in
+    "repo") echo $DMGR_REPODIR;;
+    "plugins") echo $DMGR_PLUGINDIR;;
+    *)
+      echo "Choose from 'repo', 'plugins'"
+      exit 1;;
+  esac
+
+  exit 0
+}
+
+#
+# Check if dmgr uses specific feature.
+# @param $1 Feature name.
+#
+function dmgr_has() {
+  _exist $DMGR_INUSE $1; exit $?
+}
+
+#
+# Check if dmgr supports specific feature.
+# @param $1 Feature name.
+#
+function dmgr_deals() {
+  _exist $DMGR_SUPPORT $1; exit $?
+}
+
+#
+# Check if dmgr installs specific plugin.
+# @param $1 Plugin name.
+#
+function dmgr_installed() {
+  _exist $DMGR_PLUGIN $1; exit $?
+}
+
+#
+# Support a new feature.
+# @param $1 Feature name.
+#
+function dmgr_support() {
+  if _exist $DMGR_SUPPORT $1; then
+    echo "${1} has already been supported."
+    exit 1
+  fi
+
+  _save $DMGR_SUPPORT $(_parse $DMGR_SUPPORT) $1
+  echo "${1} has been supported."
+  exit 0
+}
+
+#
+# Remove a feature from support list.
+# @param $1 Feature name.
+#
+function dmgr_unsupport() {
+  if ! _exist $DMGR_SUPPORT $1; then
+    echo "${1} has not already been supported."
+    exit 1
+  fi
+
+  _save $DMGR_SUPPORT ${$(_parse $DMGR_SUPPORT)[@]/($1)}
+  echo "${1} has not been supported."
+  exit 0
+}
+
+#
+# Enable features. They must be supported by dmgr.
+# @param $1 Feature name.
+#
+function dmgr_enable() {
+  local e= c=false
+
+  for e in $@; do
+    if ! _exist $DMGR_SUPPORT $e; then
+      echo "${e} is not supported. To support this feature, use 'dmgr support <feature_name>'"
+      continue
+    fi
+
+    if _exist $DMGR_INUSE $e; then
+      echo "${e} has already been enabled."
+      continue
+    fi
+
+    # Load and call a hook callback.
+    [ -e $DMGR_HOOKDIR/$e ] && ! _hook enable $DMGR_HOOKDIR/$e ALL &&
+      _reperr "Not successful. Aborted."
+
+    _save $DMGR_INUSE $(_parse $DMGR_INUSE) $e
+    echo "${e} has been enabled."
+    [ $c = false ] && c=true
+  done
+
+  [ $c = false ] && exit 0
+  exit 200
+}
+
+#
+# Disable a feature. The feature must be supported by dmgr.
+# @param $1 Feature name.
+#
+function dmgr_disable() {
+  local e= c=false
+
+  for e in $@; do
+    if ! _exist $DMGR_SUPPORT $e; then
+      echo "${e} is not supported. To support this feature, use 'dmgr support <feature_name>'"
+      continue
+    fi
+
+    if ! _exist $DMGR_INUSE $e; then
+      echo "${e} has already been disabled."
+      continue
+    fi
+
+    # Load and call a hook callback.
+    [ -e $DMGR_HOOKDIR/$e ] && ! _hook disable $DMGR_HOOKDIR/$e ALL &&
+      _reperr "Not successful. Aborted."
+
+    _save $DMGR_INUSE ${$(_parse $DMGR_INUSE)[@]/#%($e)}
+    echo "${e} has been disabled."
+    [ $c = false ] && c=true
+  done
+
+  [ $c = false ] && exit 0
+  exit 200
+}
+
+#
+# Show feature list.
+#
+function dmgr_list() {
+  declare -a inuse support enabled
+  local e=
+
+  inuse=($(_parse $DMGR_INUSE))
+  support=($(_parse $DMGR_SUPPORT))
+  enabled=($(echo ${inuse[@]}; echo ${support[@]} | sed 's/\s/\n/g' | sort | uniq -d))
+
+  echo "Description: * enabled, - disabled"
+
+  for e in $enabled; do echo " * ${e}"; done
+  for e in $(eval "echo \${support[@]/#%($(echo $enabled | tr -s ' ' '|'))/}"); do
+    echo " - ${e}";
+  done
+
+  exit 0
+}
+
+#
+# Update system or features.
+#
+function dmgr_update() {
+  declare -a inuse
+  local e= c=false
+
+  cd $DMGR_REPODIR
+  _d "Current directory is $(pwd)"
+
+  _fbold ":: Checking for updates..."
+  git pull origin master
+
+  _fbold "\n:: Updating dotfiles..."
+
+  if [ $# -ge 1 ]; then
+    inuse=$@
+  else
+    inuse=($(_parse $DMGR_INUSE))
+  fi
+
+  for e in $inuse; do
+    if ! _exist $DMGR_SUPPORT $e; then
+      echo "${e} is not supported. To support this feature, use 'dmgr support <feature_name>'"
+      continue
+    fi
+
+    if ! _exist $DMGR_INUSE $e; then
+      echo "${e} has already been disabled."
+      continue
+    fi
+
+    [ -f $DMGR_HOOKDIR/$e ] && ! _hook update $DMGR_HOOKDIR/$e ALL &&
+      _reperr "Not successful. Aborted."
+    [ $c = false ] && c=true
+  done
+
+  echo -e "\nUpdated."
+
+  [ $c = false ] && exit 0
+  exit 200
+}
+
+#
+# Edit a config file.
+# @param $1 Config ID.
+#
+function dmgr_edit() {
+  local e= item= config= CONF= SUDO=0
+  local desc="As staff (0) or root (1)\tType\tPath"
+
+  for e in $(_parse $DMGR_INUSE); do
+    [ -e $DMGR_CONFDIR/paths/$e ] && source $DMGR_CONFDIR/paths/$e
+  done
+
+  for item in $DMGR_CONFPATH
+  do
+    config=($(echo ${item}))
+    if [ "${config[2]}" = "${1}" ]; then
+      CONF=$config[3]; SUDO=$config[1]
+      break
+    fi
+  done
+
+  if [ "${CONF}" != "" ]; then
+    if [ $SUDO -eq 1 ]; then
+      eval "sudo ${EDITOR} ${CONF}"
+    else
+      eval "${EDITOR} ${CONF}"
+    fi
+    exit 0
+  fi
+
+  echo -e "Invalid argument value '${1}'\n"
+  echo -e $desc
+
+  for item in ${DMGR_CONFPATH}
+  do
+    config=($(echo ${item}))
+    echo -e "${config[1]}\t${config[2]}\t${config[3]}"
+  done
+  exit 1
+}
+
+#
+# Install plugins
+# @param $1... The plugin name.
+function dmgr_install() {
+  local official= ctr= item= e= this= c=false
+
+  _fbold "\n:: Installing plugins..."
+  official=($(_parse $DMGR_OFFICIAL))
+
+  for e in $@; do
+    for item in $official; do
+      ctr=($(echo $item | tr -s '=' ' '))
+
+      if [[ ${ctr[1]} == $e ]]; then
+        this=$DMGR_PLUGINDIR/${ctr[1]}
+
+        if [ -e $this ]; then
+          echo "${e} has already installed. Re-install the plugin."
+        else
+          git clone ${ctr[2]} $this
+        fi
+
+        [ -e $this/dmgr-setup ] && . $this/dmgr-setup && install
+
+        _save $DMGR_PLUGIN $plugins $e
+        echo "$e has been installed."
+        [ $c = false ] && c=true
+      fi
+    done
+  done
+
+  [ $c = false ] && exit 0
+  exit 200
+}
+
+#
+# Uninstall plugins.
+# @param $1... The plugin name.
+#
+function dmgr_uninstall() {
+  local plugins= e= this= c=false
+
+  _fbold "\n:: Uninstalling plugins..."
+
+  for e in $@; do
+    if ! _exist $DMGR_PLUGIN $e; then
+      echo "${e} is not installed."
+      exit 1
+    fi
+
+    this=$DMGR_PLUGINDIR/$e
+    [ -e $this/dmgr-setup ] && . $this/dmgr-setup && uninstall
+    rm -rf $this
+
+    _save $DMGR_PLUGIN ${$(_parse $DMGR_PLUGIN)[@]/#%($e)}
+    echo "$e has been removed."
+    [ $c = false ] && c=true
+  done
+
+  [ $c = false ] && exit 0
+  exit 200
+}
+
+#
+# Show help message.
+#
+function dmgr_help() {
+  cat <<_EOF_
+dmgr v${DMGR_VERSION}
+
+Usage
+
+  dmgr <command> (<options>)
+
+Options
+  has       : Check if a feature is enabled.
+  deals     : Check if a feature is supported.
+  installed : Check if a plugin is installed.
+  support   : Support new features.
+  unsupport : Remove features from support list.
+  install   : Install plugins.
+  uninstall : Uninstall plugins.
+  edit      : Edit a configuration file. The file path is defined in <DMGR_CONFPATH>/core/paths/*.
+  enable    : Enable features. The feature must be supported by dmgr.
+  disable   : Disable features. The feature must be supported by dmgr.
+  update    : Update dmgr and the features.
+  list      : List supported features.
+  help      : Show help message.
+_EOF_
+
+  exit 0
+}
+
+[[ "${0}" =~ "dmgr.debug$" ]] && export DMGR_DEBUGMODE=true
+
+_d "dmgr v${DMGR_VERSION} on DEBUG MODE"
+_d '$0 (dmgr path): '$0
+_d '$1 (dmgr command): '$1
+_d '$2.. (options): '${@:2}
+_d '$DMGR_DIST: '$DMGR_DIST
+_d '$DMGR_CONFDIR: '$DMGR_CONFDIR
+_d '$DMGR_FEATUREDIR: '$DMGR_FEATUREDIR
+_d '$DMGR_PLUGINIDR: '$DMGR_PLUGINDIR
+_d '$DMGR_HOOKDIR: '$DMGR_HOOKDIR
+_d '$DMGR_INUSE: '$DMGR_INUSE
+_d '$DMGR_SUPPORT: '$DMGR_SUPPORT
+_d '$DMGR_PLUGIN: '$DMGR_PLUGIN
+_d '$DMGR_OFFICIAL: '$DMGR_OFFICIAL
+_d 'Inuse features: ' $(cat $DMGR_INUSE)
+_d 'Support features: ' $(cat $DMGR_SUPPORT)
+_d 'Installed plugins: ' $(cat $DMGR_PLUGIN)
+_d 'Official plugins: ' $(cat $DMGR_OFFICIAL)
+
+case $1 in
+  "has")        _enforce_arg_chk $# '=' 1 && dmgr_has $2 ;;
+  "deals")      _enforce_arg_chk $# '=' 1 && dmgr_deals $2 ;;
+  "installed")  _enforce_arg_chk $# '=' 1 && dmgr_installed $2 ;;
+  "support")    _enforce_arg_chk $# '=' 1 && dmgr_support $2 ;;
+  "unsupport")  _enforce_arg_chk $# '=' 1 && dmgr_unsupport $2 ;;
+  "env")        _enforce_arg_chk $# '>=' 1 && dmgr_env $2 ;;
+  "enable")     _enforce_arg_chk $# '>=' 1 && dmgr_enable ${@:2} ;;
+  "disable")    _enforce_arg_chk $# '>=' 1 && dmgr_disable ${@:2} ;;
+  "install")    _enforce_arg_chk $# '>=' 1 && dmgr_install ${@:2};;
+  "uninstall")  _enforce_arg_chk $# '>=' 1 && dmgr_uninstall ${@:2} ;;
+  "update")     dmgr_update ${@:2} ;;
+  "edit")       dmgr_edit $2 ;;
+  "list")       dmgr_list ;;
+  "help")       dmgr_help ;;
+esac
+
+echo "Type 'dmgr help' for more help."
+exit 1

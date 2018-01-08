@@ -1,0 +1,19 @@
+#!/usr/bin/env zsh
+# Empty trash
+RES=1
+
+echo -n "Do you want to empty trash? [y/n] (default n): "
+read ANS
+
+if [ -e ~/.trash -a "$ANS" = "y" ]; then
+  rm -rf ~/.trash/*
+  
+  if [ "$?" -eq 0 ]; then
+    echo "Trash has been empty :)"
+    RES=0
+  fi
+fi
+
+if [ "$RES" -eq 1 ]; then
+  echo "Trash not empty :("
+fi

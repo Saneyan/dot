@@ -1,0 +1,7 @@
+#!/bin/bash
+
+export XKB_DEFAULT_LAYOUT=dvorak
+export XKB_DEFAULT_OPTIONS=ctrl:nocaps
+export _JAVA_AWT_WM_NONREPARENTING=1
+
+way-cooler

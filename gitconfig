@@ -1,0 +1,23 @@
+[core]
+editor = vim
+excludesfile = ~/.gitignore
+
+[user]
+name = "TADOKORO Saneyuki"
+email = "saneyan@gfunction.com"
+
+[color]
+ui = auto
+
+[alias]
+a = add
+s = status
+b = branch
+aa = !git add -A && git status
+co = commit -m
+pu = push
+pl = pull
+me = merge
+ch = checkout
+[receive]
+  denyCurrentBranch = ignore

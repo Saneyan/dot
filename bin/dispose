@@ -1,0 +1,7 @@
+#!/usr/bin/env zsh
+# Move to trash in order to avoid removing a file by mistake
+if [ ! -e ~/.trash ]; then
+  mkdir ~/.trash
+fi
+
+mv $1 ~/.trash
