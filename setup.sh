@@ -45,7 +45,7 @@ function link_task() {
 function setup() {
   local current_task=1
   local use_tasks=$(filter_by_env $tasks)
-  local total_tasks=$#
+  local total_tasks=${use_tasks[#]}
 
   for t in $use_tasks; do
     echo "(${current_task}/${total_tasks})"
@@ -66,7 +66,7 @@ function filter_by_env() {
 }
 
 # You can append a suffix tag composed by signs of condition after file or task name.
-# This tag affects whether a symbolic link should be created depending on current environment.
+# This tag affects whether a symbolic link should be created or a task should run depending on current environment.
 #
 # case 'l' => The platform should be Linux.
 # case 'x' => The windowing system should be X Window System or Wayland.
