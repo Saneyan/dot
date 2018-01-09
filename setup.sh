@@ -1,5 +1,19 @@
 #!/bin/bash
 
+cat <<EOL
+
+                       ___ ___     
+             ____     /  / \  \  
+            / ___\   /  /   \  \  
+           / /_/  > (  (     )  ) 
+           \___  /   \  \   /  /  
+          /_____/     \__\ /__/  
+
+           gfunction Dot Setup
+
+
+EOL
+
 # Tasks
 function nix_task() {
   echo "Installing Nix..."
@@ -24,63 +38,117 @@ function link_task() {
   local conf_dir=$HOME/.config
 
   # From inside of the dot directory to the home directory
-  for f in $(filter_by_env $dots); do
-    [ ! -e $HOME/$f ] && ln -sv $dot_dir/$f $HOME
+  for f in $(filter_by_env ${dots[@]}); do
+    [ ! -e $HOME/$f ] && ln -sv $dot_dir/$(remove_prefix_dot $f) $HOME/$f
   done
 
   mkdir -pv $conf_dir
 
   # From inside of the dot directory to private config directory
-  for f in $(filter_by_env $confs); do
-    [ ! -e $CONFDIR/$f ] && ln -sv $dot_dir/$f $conf_dir
+  for f in $(filter_by_env ${confs[@]}); do
+    [ ! -e $conf_dir/$f ] && ln -sv $dot_dir/$(remove_prefix_dot $f) $conf_dir/$f
   done
 }
 
 # Utils
-function setup() {
-  local current_task=1
-  local use_tasks=$(filter_by_env $tasks)
-  local total_tasks=${use_tasks[#]}
+function run_tasks() {
+  local -i current_task=0
+  local -a use_tasks=($(filter_by_env $@))
 
-  for t in $use_tasks; do
-    echo "(${current_task}/${total_tasks})"
+  for t in ${use_tasks[@]}; do
+    echo -n "($(((++current_task)))/${#use_tasks[@]}) "
     eval "${t}_task"
-    ((current_task++))
   done
 }
 
 function filter_by_env() {
-  local remaining
+  local remaining cond regex
 
   for t in $@; do
-    if ! [[ $t =~ ":" ]]; then remaining="$remaining $t"
-    elif [[ ${t#*:} =~ ^[lxw]+$ ]]; then remaining="$remaining ${t%:*}"; fi
+    if ! [[ $t =~ ":" ]]; then
+      remaining="$remaining $t"
+    else
+      # Try to extract second substring from a string with ':' delimiter.
+      # e.g. "abc:def" => "def"
+      cond=${t#*:}
+
+      # Compose a regular expression containing the positive lookahead construct.
+      # e.g. "def" => (?=.*d)(?=.*e)(?=.*f)
+      for i in $(seq 1 ${#cond}); do
+        regex="${regex}(?=.*${cond:i-1:1})"
+      done
+
+      if echo $env | grep -Pq $regex; then
+        remaining="$remaining ${t%:*}";
+      fi
+    fi
+    regex=
   done
 
   echo $remaining
 }
 
-# You can append a suffix tag composed by signs of condition after file or task name.
-# This tag affects whether a symbolic link should be created or a task should run depending on current environment.
+function command_exists() {
+  local cmd="$(type -p $1)" && ! [ -z $cmd ]
+}
+
+function remove_prefix_dot() {
+  echo $1 | sed -e "s/^\.//"
+}
+
+# System info
+declare env
+
+# X Window System has been installed? (yes => +x)
+$(command_exists startx) && env="${env}x"
+
+# Wayland has been installed? (yes => +w)
+$(command_exists wayland-scanner) && env="${env}w"
+
+# Either of X Window System or Wayland have been installed? (yes => +d)
+[[ $env =~ [xw]+ ]] && env="${env}d"
+
+# Curret operating system is Linux? (yes => +l)
+[[ $(uname) == "Linux" ]] && env="${env}l"
+
+#/////////////////////////#
+#                         #
+#   Customize from here   #
+#                         #
+#/////////////////////////#
+#
+# You can append signs of condition after file or task name with delimiter ':'.
+# The signs affect whether a symbolic link should be created or a task should run depending on current environment.
 #
 # case 'l' => The platform must be Linux.
-# case 'x' => The windowing system must be X Window System or Wayland.
+# case 'x' => The windowing system must be X Window System.
 # case 'w' => The windowing system must be Wayland.
+# case 'd' => Desktop environment must be available.
 
 # Files put on the home dir
-declare -a dots=(bashrc bin emacs.d gitconfig gitignore tmux.conf vim zsh.d nixpkgs xmonad:lx xorg.d:lx)
+declare -a dots=("bin"
+                 ".bashrc"
+                 ".emacs.d"
+                 ".gitconfig"
+                 ".gitignore"
+                 ".tmux.conf"
+                 ".vim"
+                 ".vimrc"
+                 ".gvimrc"
+                 ".zsh.d"
+                 ".zshenv"
+                 ".nixpkgs"
+                 ".xmonad:lx"
+                 ".xorg.d:lx")
 
 # Files put on the private config dir
-declare -a confs=(alacritty polybar:lx way-cooler:lw)
+declare -a confs=("nvim" "alacritty" "polybar:ld" "way-cooler:lw")
 
-# Setup tasks
-declare -a tasks=(nix zplug dein link)
-
-filter_by_env ${confs[@]}
+# Start to run tasks
+run_tasks nix zplug dein link
 
 cat <<EOL
 If you want to install Nix packages execute \`nix-env -i {profile_name}\`.
 These Nix profiles are available:
   - all
 EOL
-
