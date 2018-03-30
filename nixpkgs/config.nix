@@ -6,19 +6,7 @@
       name = "all";
 
       paths = [
-        git
-        way-cooler
-        ruby
-        imagemagick
-        neovim
-        dirmngr
-        zsh
-        tmux
-        rustc
-        cargo
-        sbt
-        scala
-        yarn
+        sway
       ];
     };
   };
