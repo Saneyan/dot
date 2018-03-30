@@ -16,7 +16,7 @@ set smartindent
 set smarttab
 
 "" Show line numbers and set the width
-set number
+"set number
 set numberwidth=5
 
 "" Show vim title for a window

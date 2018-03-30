@@ -1,1 +1,7 @@
 local_setting.vim
+dev-cardinal-envs
+staging-cardinal-envs
+production-cardinal-envs
+rails-start
+rails-migrate
+rails-setenv
