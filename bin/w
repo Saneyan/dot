@@ -1,2 +1,8 @@
 #!/bin/bash
-XKB_DEFAULT_LAYOUT=dvorak XKB_DEFAULT_OPTIONS=ctrl:nocaps _JAVA_AWT_WM_NONREPARENTING=1 /usr/local/bin/sway
+export GTK_IM_MODULE=fcitx
+export QT_IM_MODULE=fcitx
+export XMODIFIERS=@im=fcitx
+export DefaultIMModule=fcitx
+fcitx &
+#sudo XKB_DEFAULT_LAYOUT=dvorak XKB_DEFAULT_OPTIONS=ctrl:nocaps _JAVA_AWT_WM_NONREPARENTING=1 setcap "cap_sys_ptrace,cap_sys_tty_config=eip" /home/saneyan/Downloads/sway/build/sway/sway
+XKB_DEFAULT_LAYOUT=dvorak XKB_DEFAULT_OPTIONS=ctrl:nocaps _JAVA_AWT_WM_NONREPARENTING=1 /home/saneyan/Downloads/sway/build/sway/sway

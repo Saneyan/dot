@@ -5,3 +5,10 @@ production-cardinal-envs
 rails-start
 rails-migrate
 rails-setenv
+rails-create
+rails-drop
+rails-seed
+rails-start-prod
+rails-c
+yarn-start
+.idea

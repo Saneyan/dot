@@ -1,0 +1,50 @@
+#!/bin/bash
+
+ROOT_DIR=~/Downloads
+
+function fix_meson_latest() {
+  cd $ROOT_DIR/wlroots-latest
+  sudo rm -rf build
+  meson build
+
+  cd $ROOT_DIR/sway-latest
+  sudo rm -rf build
+  meson build
+}
+
+function fix_meson_stable() {
+  cd $ROOT_DIR/wlroots
+  sudo rm -rf build
+  meson build
+
+  cd $ROOT_DIR/sway
+  sudo rm -rf build
+  meson build
+}
+
+function build_latest() {
+  cd $ROOT_DIR/wlroots-latest
+  git pull origin master
+  sudo ninja -C build install
+
+  cd $ROOT_DIR/sway-latest
+  git pull origin master
+  sudo ninja -C build install
+}
+
+function build_stable() {
+  cd $ROOT_DIR/wlroots
+  sudo ninja -C build install
+
+  cd $ROOT_DIR/sway
+  sudo ninja -C build install
+}
+
+case $1 in
+  x) build_latest ;;
+  xx) fix_meson_latest && build_latest ;;
+  c) build_stable ;;
+  cc) fix_meson_stable && build_stable ;;
+  *)
+    echo "x for latest, c for current. twice letters with fix meson build"
+esac

@@ -1,0 +1,10 @@
+#!/bin/bash
+export GTK_IM_MODULE=fcitx
+export QT_IM_MODULE=fcitx
+export XMODIFIERS=@im=fcitx
+export DefaultIMModule=fcitx
+fcitx &
+#/home/saneyan/Downloads/sway-latest/build/swaybar/swaybar -b bar-0 &
+#sudo XKB_DEFAULT_LAYOUT=dvorak XKB_DEFAULT_OPTIONS=ctrl:nocaps _JAVA_AWT_WM_NONREPARENTING=1 setcap "cap_sys_ptrace,cap_sys_tty_config=eip" /home/saneyan/Downloads/sway/build/sway/sway
+XKB_DEFAULT_LAYOUT=dvorak XKB_DEFAULT_OPTIONS=ctrl:nocaps _JAVA_AWT_WM_NONREPARENTING=1 /home/saneyan/Downloads/sway-latest/build/sway/sway >>/home/saneyan/sway.log 2>&1
+#XKB_DEFAULT_OPTIONS=ctrl:nocaps _JAVA_AWT_WM_NONREPARENTING=1 /home/saneyan/Downloads/sway-latest/build/sway/sway >>/home/saneyan/sway.log 2>&1

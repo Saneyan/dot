@@ -15,6 +15,7 @@ source ~/.zplug/init.zsh
 source ~/.nix-profile/etc/profile.d/nix.sh
 
 export PATH=$HOME/.cargo/bin:$PATH
+export JAVA_HOME=/usr/lib/jvm/default
 
 zplug "zsh-users/zsh-history-substring-search"
 

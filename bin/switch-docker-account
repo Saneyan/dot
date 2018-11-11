@@ -1,0 +1,11 @@
+#!/bin/bash
+
+ORIGIN=~/.docker/config.json
+
+if [[ 'saneyan' = $1 ]]; then
+  rm $ORIGIN
+  ln -s ~/.docker/config.saneyan.json $ORIGIN
+elif [[ 'tokyohearth' = $1 ]]; then
+  rm $ORIGIN
+  ln -s ~/.docker/config.tokyohearth.json $ORIGIN
+fi

@@ -1,0 +1,5 @@
+#!/bin/bash
+echo "BAT0"
+upower -i /org/freedesktop/UPower/devices/battery_BAT0 | grep percentage
+echo "BAT1"
+upower -i /org/freedesktop/UPower/devices/battery_BAT1 | grep percentage
