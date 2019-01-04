@@ -15,12 +15,6 @@ cat <<EOL
 EOL
 
 # Tasks
-function nix_task() {
-  echo "Installing Nix..."
-  bash <(curl https://nixos.org/nix/install)
-  source ~/.nix-profile/etc/profile.d/nix.sh
-}
-
 function zplug_task() {
   echo "Installing zplug..."
   curl -sL --proto-redir -all,https https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh
@@ -137,7 +131,6 @@ declare -a dots=("bin"
                  ".gvimrc"
                  ".zsh.d"
                  ".zshenv"
-                 ".nixpkgs"
                  ".xmonad:lx"
                  ".xorg.d:lx")
 
@@ -145,7 +138,7 @@ declare -a dots=("bin"
 declare -a confs=("nvim" "alacritty" "polybar:ld" "way-cooler:lw")
 
 # Start to run tasks
-run_tasks nix zplug dein link
+run_tasks zplug dein link
 
 cat <<EOL
 If you want to install Nix packages execute \`nix-env -i {profile_name}\`.
