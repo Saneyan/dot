@@ -90,8 +90,8 @@ function remove_prefix_dot() {
   echo $1 | sed -e "s/^\.//"
 }
 
-# System info
-declare env
+# System info. It can inherits ENV value.
+declare env=$ENV
 
 # X Window System has been installed? (yes => +x)
 $(command_exists startx) && env="${env}x"
@@ -102,7 +102,7 @@ $(command_exists wayland-scanner) && env="${env}w"
 # Either of X Window System or Wayland have been installed? (yes => +d)
 [[ $env =~ [xw]+ ]] && env="${env}d"
 
-# Curret operating system is Linux? (yes => +l)
+# Current operating system is Linux? (yes => +l)
 [[ $(uname) == "Linux" ]] && env="${env}l"
 
 #/////////////////////////#
@@ -139,9 +139,3 @@ declare -a confs=("nvim" "alacritty" "polybar:ld" "way-cooler:lw")
 
 # Start to run tasks
 run_tasks zplug dein link
-
-cat <<EOL
-If you want to install Nix packages execute \`nix-env -i {profile_name}\`.
-These Nix profiles are available:
-  - all
-EOL
