@@ -21,3 +21,6 @@ me = merge
 ch = checkout
 [receive]
   denyCurrentBranch = ignore
+
+[url "ssh://git@github.com/tokyohearth/"]
+  insteadOf = https://github.com/tokyohearth/
