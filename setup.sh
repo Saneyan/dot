@@ -14,7 +14,7 @@ cat <<EOL
 
 EOL
 
-# Tasks
+# General tasks
 function zplug_task() {
   echo "Installing zplug..."
   curl -sL --proto-redir -all,https https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh
@@ -42,6 +42,29 @@ function link_task() {
   for f in $(filter_by_env ${confs[@]}); do
     [ ! -e $conf_dir/$f ] && ln -sv $dot_dir/$(remove_prefix_dot $f) $conf_dir/$f
   done
+}
+
+# Dev server tasks
+function code-server_task() {
+  echo "Installing code-server..."
+  local version="1.939-vsc1.33.1"
+  curl -L https://github.com/cdr/code-server/releases/download/$version/code-server$version-linux-x64.tar.gz > /tmp/code-server-bin.tar.gz
+  mkdir -pv /tmp/code-server-bin
+  tar zxvf /tmp/code-server-bin.tar.gz -C /tmp/code-server-bin --strip-components=1
+  mkdir -pv ~/.local/bin
+  mv /tmp/code-server-bin/code-server ~/.local/bin
+  mkdir -pv ~/.config/code-server/extensions
+  mkdir -pv ~/.config/code-server/user-data
+}
+
+# Go tasks
+function go_task() {
+  echo "Installing golang..."
+  local version="1.12.4"
+  curl -L https://dl.google.com/go/go$version.linux-amd64.tar.gz > /tmp/go.tar.gz
+  mkdir -pv /tmp/go
+  tar zxvf /tmp/go.tar.gz -C /tmp/go --strip-components=1
+  mv -v /tmp/go ~/go
 }
 
 # Utils
@@ -118,24 +141,43 @@ $(command_exists wayland-scanner) && env="${env}w"
 # case 'x' => The windowing system must be X Window System.
 # case 'w' => The windowing system must be Wayland.
 # case 'd' => Desktop environment must be available.
-
+#
 # Files put on the home dir
-declare -a dots=("bin"
-                 ".bashrc"
-                 ".emacs.d"
-                 ".gitconfig"
-                 ".gitignore"
-                 ".tmux.conf"
-                 ".vim"
-                 ".vimrc"
-                 ".gvimrc"
-                 ".zsh.d"
-                 ".zshenv"
-                 ".xmonad:lx"
-                 ".xorg.d:lx")
-
+# declare -a dots=()
+#
 # Files put on the private config dir
-declare -a confs=("nvim" "alacritty" "polybar:ld" "way-cooler:lw")
+# declare -a confs=()
+#
 
-# Start to run tasks
-run_tasks zplug dein link
+if [[ $1 == "server" ]]; then
+  declare -a dots=()
+
+  declare -a confs=()
+
+  run_tasks code-server
+elif [[ $1 == "go" ]]; then
+  declare -a dots=()
+
+  declare -a confs=()
+
+  run_tasks go
+else
+  declare -a dots=("bin"
+                   ".bashrc"
+                   ".emacs.d"
+                   ".gitconfig"
+                   ".gitignore"
+                   ".tmux.conf"
+                   ".vim"
+                   ".vimrc"
+                   ".gvimrc"
+                   ".zsh.d"
+                   ".zshenv"
+                   ".xmonad:lx"
+                   ".xorg.d:lx")
+
+  declare -a confs=("nvim" "alacritty" "polybar:ld" "way-cooler:lw")
+
+  run_tasks zplug dein link
+fi
+
