@@ -58,13 +58,22 @@ function code-server_task() {
 }
 
 # Go tasks
-function go_task() {
+function go-lang_task() {
   echo "Installing golang..."
   local version="1.12.4"
   curl -L https://dl.google.com/go/go$version.linux-amd64.tar.gz > /tmp/go.tar.gz
   mkdir -pv /tmp/go
   tar zxvf /tmp/go.tar.gz -C /tmp/go --strip-components=1
   mv -v /tmp/go ~/go
+}
+
+function go-migrate_task() {
+  echo "Installing migrate..."
+  local version="v4.3.1"
+  curl -L https://github.com/golang-migrate/migrate/releases/download/$version/migrate.linux-amd64.tar.gz > /tmp/migrate.tar.gz
+  mkdir -pv /tmp/migrate
+  tar zxvf /tmp/migrate.tar.gz -C /tmp/migrate --strip-components=1
+  mv -v /tmp/migrate/migrate.linux-amd64 ~/.local/bin/migrate
 }
 
 # Utils
@@ -160,7 +169,7 @@ elif [[ $1 == "go" ]]; then
 
   declare -a confs=()
 
-  run_tasks go
+  run_tasks go-lang go-migrate
 else
   declare -a dots=("bin"
                    ".bashrc"
