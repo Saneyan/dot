@@ -5,10 +5,10 @@
 tnoremap <Leader><ESC> <C-\><C-n>
 tnoremap <silent> <C-n> <C-\><C-n> :tabnext <BAR> :call <SID>insertModeOnTerminal()<CR>
 tnoremap <silent> <C-p> <C-\><C-n> :tabprevious <BAR> :call <SID>insertModeOnTerminal()<CR>
-tnoremap <silent> <Leader>ee <C-\><C-n> :tabnew +:terminal<CR>
-tnoremap <silent> <Leader>ec <C-\><C-n> :tabclose <BAR> :call <SID>insertModeOnTerminal()<CR>
-tnoremap <silent> <Leader>ev <C-\><C-n> :vsp +:terminal<CR>
-tnoremap <silent> <Leader>eh <C-\><C-n> :sp +:terminal<CR>
+tnoremap <silent> <Leader>te <C-\><C-n> :tabnew +:terminal <BAR> :call <SID>insertModeOnTerminal()<CR>
+tnoremap <silent> <Leader>tc <C-\><C-n> :tabclose <BAR> :call <SID>insertModeOnTerminal()<CR>
+tnoremap <silent> <Leader>tv <C-\><C-n> :vsp +:terminal <BAR> :call <SID>insertModeOnTerminal()<CR>
+tnoremap <silent> <Leader>th <C-\><C-n> :sp +:terminal <BAR> :call <SID>insertModeOnTerminal()<CR>
 
 " Normal settings
 nnoremap <silent> <C-n> :tabnext<CR>
@@ -32,9 +32,7 @@ nnoremap <silent> <Leader>n :NERDTree<CR>
 nnoremap <silent> <Leader>m :OverCommandLine<CR>
 
 func! s:insertModeOnTerminal()
-    if &buftype == 'terminal'
-        startinsert!
-    endif
+    startinsert!
 endfunc
 
 func! s:maybeInsertMode(direction)

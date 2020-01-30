@@ -12,11 +12,11 @@
 
 source ~/.zplug/init.zsh
 
-export GOPATH=$HOME/go
-export GOROOT=$HOME/go
 export PATH=$HOME/.cargo/bin:$PATH
 export PATH=$HOME/.local/bin:$PATH
+export PATH=/usr/local/go/bin:$PATH
 export PATH=$HOME/go/bin:$PATH
+export GOPATH=$HOME/go
 export JAVA_HOME=/usr/lib/jvm/default
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
