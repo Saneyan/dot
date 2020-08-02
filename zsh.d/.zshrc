@@ -12,6 +12,9 @@
 
 source ~/.zplug/init.zsh
 
+# WSL2 only
+export DISPLAY=$(grep -m 1 nameserver /etc/resolv.conf | awk '{print $2}'):0.0
+export "LIBGL_ALWAYS_INDIRECT=1"
 export PATH=$HOME/.cargo/bin:$PATH
 export PATH=$HOME/.local/bin:$PATH
 export PATH=/usr/local/go/bin:$PATH
