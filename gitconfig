@@ -25,4 +25,4 @@ ch = checkout
 [url "ssh://git@github.com/tokyohearth/"]
   insteadOf = https://github.com/tokyohearth/
 [url "ssh://git@github.com/athearth/"]
-  insteadOf = https://github.com/athearth/
+	insteadOf = https://github.com/athearth/
