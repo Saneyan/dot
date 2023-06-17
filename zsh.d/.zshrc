@@ -19,11 +19,22 @@ export PATH=$HOME/.cargo/bin:$PATH
 export PATH=$HOME/.local/bin:$PATH
 export PATH=/usr/local/go/bin:$PATH
 export PATH=$HOME/go/bin:$PATH
+export PATH=/opt/homebrew/opt/mysql-client/bin:$PATH
+export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
+export LDFLAGS="-L/opt/homebrew/opt/libpq/lib"
+export CPPFLAGS="-I/opt/homebrew/opt/libpq/include"
+export PKG_CONFIG_PATH="/opt/homebrew/opt/libpq/lib/pkgconfig"
 export GOPATH=$HOME/go
 export JAVA_HOME=/usr/lib/jvm/default
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 export LANGUAGE=en_US.UTF-8
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/Users/saneyan/Development/github.com/athearth/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/saneyan/Development/github.com/athearth/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/Users/saneyan/Development/github.com/athearth/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/saneyan/Development/github.com/athearth/google-cloud-sdk/completion.zsh.inc'; fi
 
 zplug "zsh-users/zsh-history-substring-search"
 
@@ -159,3 +170,6 @@ alias -g L="| less"
 alias -g T="| tail"
 alias -g H="| head"
 alias -g G="| grep"
+
+# Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
+export PATH="$PATH:$HOME/.rvm/bin"
