@@ -20,12 +20,6 @@ function zplug_task() {
   curl -sL --proto-redir -all,https https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh
 }
 
-function dein_task() {
-  echo "Installing dein.vim..."
-  curl https://raw.githubusercontent.com/Shougo/dein.vim/master/bin/installer.sh > /tmp/dein.vim-installer.sh
-  sh /tmp/dein.vim-installer.sh ~/.cache/dein
-}
-
 function link_task() {
   echo "Linking dotfiles..."
   local dot_dir=$(cd $(dirname $0) && pwd)
@@ -129,7 +123,7 @@ declare env=$ENV
 $(command_exists startx) && env="${env}x"
 
 # Wayland has been installed? (yes => +w)
-$(command_exists wayland-scanner) && env="${env}w"
+[[ $XDG_SESSION_TYPE == "wayland" ]] && env="${env}w"
 
 # Either of X Window System or Wayland have been installed? (yes => +d)
 [[ $env =~ [xw]+ ]] && env="${env}d"
@@ -185,8 +179,8 @@ else
                    ".xmonad:lx"
                    ".xorg.d:lx")
 
-  declare -a confs=("nvim" "alacritty" "polybar:ld" "way-cooler:lw")
+  declare -a confs=("nvim" "alacritty" "polybar:ld" "way-cooler:lw" "sway:lw")
 
-  run_tasks zplug dein link
+  run_tasks link zplug
 fi
 
